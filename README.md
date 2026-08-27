@@ -4,8 +4,11 @@ Estensione Firefox minimale: un solo pulsante nella barra degli strumenti che ri
 la pagina corrente anteponendo all'URL il prefisso di un mirror Freedium, sostituendo
 la scheda attiva.
 
-Da `https://example.com/articolo` si passa a
-`https://freedium-mirror.cfd/https://example.com/articolo`.
+Da `https://medium.com/@autore/articolo` si passa a
+`https://freedium-mirror.cfd/https://medium.com/@autore/articolo`.
+
+Il pulsante è attivo **solo su `medium.com` e sui suoi sottodomini**. Su qualsiasi
+altra pagina resta disattivato e mostra un'icona grigia.
 
 ---
 
@@ -40,20 +43,26 @@ descritte qui valgono solo per quel profilo.
 
 ```
 freedium-redirect/
-├── manifest.json     # manifest MV3: permessi, action, background
-├── background.js     # listener sul click del pulsante
-├── icon.svg          # icona della toolbar
+├── manifest.json       # manifest MV3: permessi, action, background
+├── background.js       # abilitazione per dominio + listener sul click
+├── icon.svg            # icona della toolbar (pulsante attivo)
+├── icon-disabled.svg   # icona grigia (pulsante disattivato)
 └── README.md
 ```
 
-I tre file dell'estensione devono stare **alla radice** dell'archivio `.xpi`.
+I quattro file dell'estensione devono stare **alla radice** dell'archivio `.xpi`.
 Un livello di annidamento in più impedisce a Firefox di trovare il manifest.
 
 ### Permessi richiesti
 
-Solo `activeTab`. L'estensione ottiene l'URL della scheda unicamente nel momento in
-cui premi il pulsante: nessun permesso host permanente, nessun accesso in background
-alla cronologia o alle altre schede.
+- `activeTab` — accesso alla scheda corrente nel momento in cui premi il pulsante.
+- `tabs` — lettura dell'URL delle schede.
+
+`tabs` serve per decidere *prima* del click se la pagina è su Medium: `activeTab`
+concede l'URL solo *durante* il click, troppo tardi per colorare o spegnere l'icona.
+In cambio l'estensione può leggere l'URL di tutte le schede aperte. Il codice lo usa
+solo per confrontarlo con `ENABLED_DOMAINS`: nessun dato viene memorizzato o inviato
+altrove, e l'unica richiesta di rete parte dal click, verso il mirror.
 
 ---
 
@@ -107,13 +116,13 @@ la cartella che li contiene.
 
 ```bash
 cd freedium-redirect
-zip -X ../freedium-redirect.xpi manifest.json background.js icon.svg
+zip -X ../freedium-redirect.xpi manifest.json background.js icon.svg icon-disabled.svg
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-Compress-Archive -Path manifest.json,background.js,icon.svg -DestinationPath freedium-redirect.zip
+Compress-Archive -Path manifest.json,background.js,icon.svg,icon-disabled.svg -DestinationPath freedium-redirect.zip
 Rename-Item freedium-redirect.zip freedium-redirect.xpi
 ```
 
@@ -129,7 +138,7 @@ Verifica sempre la struttura prima di installare:
 unzip -l freedium-redirect.xpi
 ```
 
-L'output deve elencare i tre file senza alcun prefisso di cartella.
+L'output deve elencare i quattro file senza alcun prefisso di cartella.
 
 ---
 
@@ -157,6 +166,24 @@ const PREFIX = "https://freedium-mirror.cfd/";
 
 Mantieni lo slash finale e il doppio slash dopo `https:`.
 
+### Cambiare i domini su cui il pulsante è attivo
+
+Sempre in `background.js`:
+
+```js
+const ENABLED_DOMAINS = ["medium.com"];
+```
+
+Ogni voce copre il dominio indicato **e tutti i suoi sottodomini**: `medium.com`
+abilita anche `blog.medium.com` e `nomeutente.medium.com`. Per includere le testate
+Medium su dominio proprio basta aggiungerle all'elenco:
+
+```js
+const ENABLED_DOMAINS = ["medium.com", "towardsdatascience.com"];
+```
+
+Scrivi solo il nome host, senza schema né slash.
+
 ### Aggiungere una scorciatoia da tastiera
 
 In `manifest.json`, allo stesso livello di `"action"`:
@@ -171,10 +198,19 @@ In `manifest.json`, allo stesso livello di `"action"`:
 
 ### Comportamento del pulsante
 
-`background.js` ignora deliberatamente:
+Il pulsante ha due stati, aggiornati a ogni navigazione e ricalcolati per ciascuna
+scheda in modo indipendente:
 
-- le pagine non `http`/`https` (`about:`, `file:`, `view-source:`, nuova scheda vuota);
-- gli URL che iniziano già con il prefisso, per evitare doppie concatenazioni.
+- **attivo** (icona a colori) sulle pagine `http`/`https` di un dominio elencato in
+  `ENABLED_DOMAINS`;
+- **disattivato** (icona grigia, click inerte) ovunque altrove.
+
+Ricadono nello stato disattivato anche le pagine non `http`/`https` (`about:`,
+`file:`, `view-source:`, nuova scheda vuota) e le pagine già aperte sul mirror: il
+loro host non è `medium.com`, quindi non c'è modo di concatenare il prefisso due volte.
+
+Sulle schede disattivate il tooltip spiega il motivo invece di lasciare un pulsante
+apparentemente rotto.
 
 ---
 
@@ -199,9 +235,9 @@ versione non cambia: la reinstallazione viene ignorata silenziosamente.
 - Su Windows, con le estensioni dei file nascoste, rinominare `.zip` in `.xpi`
   produce in realtà `nome.xpi.zip`. Attiva Visualizza → *Estensioni nomi file* e
   controlla il nome reale.
-- L'archivio contiene un livello di cartella in più: ricomprimi selezionando i tre
+- L'archivio contiene un livello di cartella in più: ricomprimi selezionando i quattro
   file, non la directory.
-- Download incompleto: il pacchetto corretto pesa circa 1,4 KB.
+- Download incompleto: il pacchetto corretto pesa circa 2,3 KB.
 
 **«Il componente aggiuntivo non risulta verificato»**
 
@@ -213,10 +249,18 @@ anziché Developer Edition.
 È stata caricata da `about:debugging`, che è temporaneo per definizione. Usa
 l'installazione permanente.
 
-**Il pulsante non fa nulla**
+**Il pulsante è grigio e non risponde**
 
-Verifica di essere su una pagina `http`/`https` e non già sul mirror. Per il log,
-apri `about:debugging` → *Questo Firefox* → **Ispeziona** accanto all'estensione.
+È il comportamento previsto fuori da `medium.com`: passa il mouse sull'icona, il
+tooltip lo conferma. Se resta grigio *su* un articolo Medium, controlla di essere su
+un host coperto da `ENABLED_DOMAINS` (le testate su dominio proprio, per esempio
+`towardsdatascience.com`, vanno aggiunte a mano) e che l'estensione sia aggiornata
+alla versione 1.1 o successiva.
+
+**Il pulsante è a colori ma non fa nulla**
+
+Apri `about:debugging` → *Questo Firefox* → **Ispeziona** accanto all'estensione e
+controlla la console: gli errori di apertura del mirror vengono registrati lì.
 
 ---
 

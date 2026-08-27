@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Freedium Redirect",
-  "version": "1.0",
-  "description": "Riapre la pagina corrente tramite il mirror Freedium.",
+  "version": "1.1",
+  "description": "Riapre l'articolo Medium corrente tramite il mirror Freedium.",
   "browser_specific_settings": {
     "gecko": {
       "id": "freedium-redirect@local",
       "strict_min_version": "109.0"
     }
   },
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "tabs"],
   "action": {
     "default_title": "Apri con Freedium",
     "default_icon": {
