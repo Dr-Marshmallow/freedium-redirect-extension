@@ -1,14 +1,23 @@
 const PREFIX = "https://freedium-mirror.cfd/";
 
-// Domini su cui il pulsante è attivo: il dominio stesso e tutti i suoi sottodomini
-// (medium.com, blog.medium.com, nomeutente.medium.com, ...).
-const ENABLED_DOMAINS = ["medium.com"];
+// Domini su cui il pulsante è attivo: ogni voce copre il dominio stesso e tutti i
+// suoi sottodomini (medium.com abilita blog.medium.com, nytimes.com abilita
+// cooking.nytimes.com, ...).
+const ENABLED_DOMAINS = [
+  "medium.com",
+  "nytimes.com",
+  "washingtonpost.com",
+  "bloomberg.com",
+  "reuters.com",
+  "economist.com",
+  "ft.com"
+];
 
 const ICON_ENABLED = "icon.svg";
 const ICON_DISABLED = "icon-disabled.svg";
 
 const TITLE_ENABLED = "Apri con Freedium";
-const TITLE_DISABLED = "Freedium Redirect: attivo solo su medium.com";
+const TITLE_DISABLED = "Freedium Redirect: attivo solo sui siti supportati";
 
 // Vero solo per pagine http/https su uno dei domini abilitati.
 // Un URL già sul mirror ha come host quello del mirror, quindi ricade nel ramo falso.

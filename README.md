@@ -7,13 +7,15 @@ la scheda attiva.
 Da `https://medium.com/@autore/articolo` si passa a
 `https://freedium-mirror.cfd/https://medium.com/@autore/articolo`.
 
-Il pulsante è attivo **solo su `medium.com` e sui suoi sottodomini**. Su qualsiasi
-altra pagina resta disattivato e mostra un'icona grigia.
+Il pulsante è attivo **solo sui siti supportati e sui loro sottodomini** (vedi
+[Siti supportati](#siti-supportati)). Su qualsiasi altra pagina resta disattivato e
+mostra un'icona grigia.
 
 ---
 
 ## Indice
 
+- [Siti supportati](#siti-supportati)
 - [Requisiti](#requisiti)
 - [Struttura del progetto](#struttura-del-progetto)
 - [Installazione temporanea (per sviluppo)](#installazione-temporanea-per-sviluppo)
@@ -24,6 +26,30 @@ altra pagina resta disattivato e mostra un'icona grigia.
 - [Aggiornare l'estensione](#aggiornare-lestensione)
 - [Risoluzione dei problemi](#risoluzione-dei-problemi)
 - [Note sulla sicurezza](#note-sulla-sicurezza)
+
+---
+
+## Siti supportati
+
+Il pulsante si accende sui domini seguenti **e su tutti i loro sottodomini**:
+
+| Testata | Dominio |
+| --- | --- |
+| Medium | `medium.com` |
+| The New York Times | `nytimes.com` |
+| The Washington Post | `washingtonpost.com` |
+| Bloomberg | `bloomberg.com` |
+| Reuters | `reuters.com` |
+| The Economist | `economist.com` |
+| Financial Times | `ft.com` |
+
+L'elenco vive in `ENABLED_DOMAINS` in `background.js` ed è l'unica cosa da toccare
+per aggiungerne altri: vedi
+[Cambiare i domini](#cambiare-i-domini-su-cui-il-pulsante-è-attivo).
+
+Freedium nasce come mirror per Medium: sulle altre testate il redirect parte
+comunque, ma il risultato dipende da quanto il mirror riesce a servire per quel
+dominio.
 
 ---
 
@@ -58,8 +84,9 @@ Un livello di annidamento in più impedisce a Firefox di trovare il manifest.
 - `activeTab` — accesso alla scheda corrente nel momento in cui premi il pulsante.
 - `tabs` — lettura dell'URL delle schede.
 
-`tabs` serve per decidere *prima* del click se la pagina è su Medium: `activeTab`
-concede l'URL solo *durante* il click, troppo tardi per colorare o spegnere l'icona.
+`tabs` serve per decidere *prima* del click se la pagina è su un sito supportato:
+`activeTab` concede l'URL solo *durante* il click, troppo tardi per colorare o
+spegnere l'icona.
 In cambio l'estensione può leggere l'URL di tutte le schede aperte. Il codice lo usa
 solo per confrontarlo con `ENABLED_DOMAINS`: nessun dato viene memorizzato o inviato
 altrove, e l'unica richiesta di rete parte dal click, verso il mirror.
@@ -171,12 +198,20 @@ Mantieni lo slash finale e il doppio slash dopo `https:`.
 Sempre in `background.js`:
 
 ```js
-const ENABLED_DOMAINS = ["medium.com"];
+const ENABLED_DOMAINS = [
+  "medium.com",
+  "nytimes.com",
+  "washingtonpost.com",
+  "bloomberg.com",
+  "reuters.com",
+  "economist.com",
+  "ft.com"
+];
 ```
 
 Ogni voce copre il dominio indicato **e tutti i suoi sottodomini**: `medium.com`
-abilita anche `blog.medium.com` e `nomeutente.medium.com`. Per includere le testate
-Medium su dominio proprio basta aggiungerle all'elenco:
+abilita anche `blog.medium.com` e `nomeutente.medium.com`, `nytimes.com` copre anche
+`cooking.nytimes.com`. Per aggiungere un'altra testata basta inserirla nell'elenco:
 
 ```js
 const ENABLED_DOMAINS = ["medium.com", "towardsdatascience.com"];
@@ -207,7 +242,8 @@ scheda in modo indipendente:
 
 Ricadono nello stato disattivato anche le pagine non `http`/`https` (`about:`,
 `file:`, `view-source:`, nuova scheda vuota) e le pagine già aperte sul mirror: il
-loro host non è `medium.com`, quindi non c'è modo di concatenare il prefisso due volte.
+loro host non è tra quelli supportati, quindi non c'è modo di concatenare il
+prefisso due volte.
 
 Sulle schede disattivate il tooltip spiega il motivo invece di lasciare un pulsante
 apparentemente rotto.
@@ -220,7 +256,7 @@ Firefox non ricarica il codice di un'estensione installata da file se il numero 
 versione non cambia: la reinstallazione viene ignorata silenziosamente.
 
 1. Modifica il codice.
-2. Incrementa `"version"` in `manifest.json` (es. da `1.0` a `1.1`).
+2. Incrementa `"version"` in `manifest.json` (es. da `1.1` a `1.2`).
 3. Ricrea il `.xpi`.
 4. Reinstalla da `about:addons`.
 
@@ -251,11 +287,11 @@ l'installazione permanente.
 
 **Il pulsante è grigio e non risponde**
 
-È il comportamento previsto fuori da `medium.com`: passa il mouse sull'icona, il
-tooltip lo conferma. Se resta grigio *su* un articolo Medium, controlla di essere su
-un host coperto da `ENABLED_DOMAINS` (le testate su dominio proprio, per esempio
-`towardsdatascience.com`, vanno aggiunte a mano) e che l'estensione sia aggiornata
-alla versione 1.1 o successiva.
+È il comportamento previsto fuori dai [siti supportati](#siti-supportati): passa il
+mouse sull'icona, il tooltip lo conferma. Se resta grigio *su* un articolo di una
+testata elencata, controlla di essere su un host coperto da `ENABLED_DOMAINS` (le
+testate non in elenco, per esempio `towardsdatascience.com`, vanno aggiunte a mano) e
+che l'estensione sia aggiornata alla versione 1.2 o successiva.
 
 **Il pulsante è a colori ma non fa nulla**
 
