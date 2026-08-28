@@ -1,15 +1,16 @@
 # Freedium Redirect
 
-Estensione Firefox minimale: un solo pulsante nella barra degli strumenti che riapre
-la pagina corrente anteponendo all'URL il prefisso di un mirror Freedium, sostituendo
-la scheda attiva.
+Estensione Firefox minimale: un pulsante nella barra degli strumenti e una voce nel
+menu del tasto destro che riaprono la pagina corrente anteponendo all'URL il prefisso
+di un mirror Freedium, sostituendo la scheda attiva.
 
 Da `https://medium.com/@autore/articolo` si passa a
 `https://freedium-mirror.cfd/https://medium.com/@autore/articolo`.
 
-Il pulsante è attivo **solo sui siti supportati e sui loro sottodomini** (vedi
-[Siti supportati](#siti-supportati)). Su qualsiasi altra pagina resta disattivato e
-mostra un'icona grigia.
+Entrambi funzionano **solo sui siti supportati e sui loro sottodomini** (vedi
+[Siti supportati](#siti-supportati)). Su qualsiasi altra pagina il pulsante resta
+disattivato con un'icona grigia e la voce *Apri con Freedium* non compare affatto nel
+menu contestuale.
 
 ---
 
@@ -70,8 +71,8 @@ descritte qui valgono solo per quel profilo.
 ```
 freedium-redirect/
 ├── manifest.json       # manifest MV3: permessi, action, background
-├── background.js       # abilitazione per dominio + listener sul click
-├── icon.svg            # icona della toolbar (pulsante attivo)
+├── background.js       # abilitazione per dominio, menu contestuale, listener sul click
+├── icon.svg            # icona dell'estensione: toolbar attiva + voce di menu
 ├── icon-disabled.svg   # icona grigia (pulsante disattivato)
 └── README.md
 ```
@@ -83,6 +84,11 @@ Un livello di annidamento in più impedisce a Firefox di trovare il manifest.
 
 - `activeTab` — accesso alla scheda corrente nel momento in cui premi il pulsante.
 - `tabs` — lettura dell'URL delle schede.
+- `menus` — voce *Apri con Freedium* nel menu del tasto destro.
+
+La voce di menu mostra l'icona dichiarata in `"icons"` nel manifest: per gli elementi
+di primo livello Firefox ignora la proprietà `icons` di `menus.create`, utilizzabile
+solo nei sottomenu.
 
 `tabs` serve per decidere *prima* del click se la pagina è su un sito supportato:
 `activeTab` concede l'URL solo *durante* il click, troppo tardi per colorare o
@@ -193,7 +199,7 @@ const PREFIX = "https://freedium-mirror.cfd/";
 
 Mantieni lo slash finale e il doppio slash dopo `https:`.
 
-### Cambiare i domini su cui il pulsante è attivo
+### Cambiare i domini su cui l'estensione è attiva
 
 Sempre in `background.js`:
 
@@ -217,7 +223,9 @@ abilita anche `blog.medium.com` e `nomeutente.medium.com`, `nytimes.com` copre a
 const ENABLED_DOMAINS = ["medium.com", "towardsdatascience.com"];
 ```
 
-Scrivi solo il nome host, senza schema né slash.
+Scrivi solo il nome host, senza schema né slash. L'elenco vale per entrambe le vie
+d'accesso: i `documentUrlPatterns` che filtrano la voce del menu contestuale vengono
+derivati da `ENABLED_DOMAINS`, quindi non c'è una seconda lista da tenere allineata.
 
 ### Aggiungere una scorciatoia da tastiera
 
