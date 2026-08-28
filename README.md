@@ -307,3 +307,7 @@ Con `xpinstall.signatures.required` impostata a `false` il profilo accetta quals
 compromesso accettabile su un profilo di sviluppo usato consapevolmente; se quel
 profilo diventa il browser principale, conviene ripristinare la preferenza a `true`
 e firmare l'estensione su addons.mozilla.org (distribuzione *self-hosted*, gratuita).
+
+## Licenza
+
+Distribuito con licenza MIT. Vedi [LICENSE](LICENSE).
